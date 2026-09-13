@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { colors, radius, spacing } from '@/theme/colors';
 import { Card } from '@/components/card';
 
@@ -40,6 +41,22 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
+        <Text style={styles.cardTitle}>Content update pipeline</Text>
+        <Text style={styles.body}>
+          Amendments, commencements and bill status flow through a monitored →
+          detected → editorial review → publish pipeline, each step recorded in an
+          audit trail. Nothing is published without review.
+        </Text>
+        <Pressable
+          onPress={() => router.push('/updates/inbox')}
+          style={({ pressed }) => [styles.pipelineLink, pressed && styles.pressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pipelineLinkText}>Open editorial inbox (internal tool)</Text>
+        </Pressable>
+      </Card>
+
+      <Card>
         <Text style={styles.cardTitle}>Content status</Text>
         <View style={styles.dotRow}>
           <View style={[styles.dot, { backgroundColor: '#3FA46A' }]} />
@@ -76,6 +93,15 @@ const styles = StyleSheet.create({
   dotRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   dot: { width: 10, height: 10, borderRadius: radius.pill },
   dotText: { color: colors.text, fontSize: 13, flex: 1 },
+  pipelineLink: {
+    marginTop: spacing.md,
+    backgroundColor: colors.navy800,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  pipelineLinkText: { color: colors.gold, fontSize: 13, fontWeight: '700' },
+  pressed: { opacity: 0.7 },
   sectionTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: spacing.md },
   roadRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, marginBottom: spacing.sm },
   roadIndex: { color: colors.gold, fontSize: 12.5, fontWeight: '700', width: 24 },

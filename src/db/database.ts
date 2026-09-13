@@ -1,6 +1,15 @@
 import * as SQLite from 'expo-sqlite';
-import { SCHEMA_DDL, SECTIONS_FTS_DDL, ARTICLES_FTS_DDL, FTS_TRIGGERS_DDL, APP_DB_KEY, SCHEMA_VERSION } from './schema';
+import {
+  SCHEMA_DDL,
+  SECTIONS_FTS_DDL,
+  ARTICLES_FTS_DDL,
+  FTS_TRIGGERS_DDL,
+  PIPELINE_DDL,
+  APP_DB_KEY,
+  SCHEMA_VERSION,
+} from './schema';
 import { runSeed } from './seed';
+import { seedPipelineSamples } from './seed/updates';
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -25,6 +34,7 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
       await db.execAsync(SECTIONS_FTS_DDL);
       await db.execAsync(ARTICLES_FTS_DDL);
       await db.execAsync(FTS_TRIGGERS_DDL);
+      await db.execAsync(PIPELINE_DDL);
       await db.execAsync(`
         INSERT OR REPLACE INTO app_meta(key, value) VALUES ('schema_version', '${SCHEMA_VERSION}');
       `);
@@ -36,6 +46,9 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
   }
 
   await ensureSeeded(db);
+
+  // Idempotent: demo records for the Section 3E pipeline (feed + editorial inbox).
+  await seedPipelineSamples(db);
   return db;
 }
 

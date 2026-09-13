@@ -1,6 +1,6 @@
 export const APP_DB_KEY = 'legalpocket';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const SCHEMA_DDL = `
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -163,4 +163,60 @@ CREATE TRIGGER IF NOT EXISTS articles_au AFTER UPDATE ON articles BEGIN
   INSERT INTO articles_fts(rowid, number, title, body, summary)
   VALUES (new.id, new.number, new.title, new.body, new.summary);
 END;
+`;
+
+// Section 3E: legislative update / editorial pipeline (schema migration 2).
+export const PIPELINE_DDL = `
+CREATE TABLE IF NOT EXISTS legislation_updates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  update_kind TEXT NOT NULL,             -- amendment | commencement | repeal | new_act | bill_introduced | bill_passed | assent
+  ref_type TEXT NOT NULL,                -- act | section | article | constitution | bill
+  ref_id INTEGER,                        -- section/article id when ref_type is section/article
+  act_id INTEGER REFERENCES acts(id) ON DELETE SET NULL,
+  section_number TEXT,
+  title TEXT NOT NULL,
+  summary TEXT,
+  official_url TEXT,
+  gazette_id TEXT,
+  status TEXT NOT NULL DEFAULT 'detected',  -- detected | under_review | approved | rejected | published
+  detected_at TEXT NOT NULL DEFAULT (datetime('now')),
+  under_review_at TEXT,
+  reviewed_at TEXT,
+  published_at TEXT,
+  reviewer_note TEXT,
+  version_no INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_updates_status ON legislation_updates(status);
+CREATE INDEX IF NOT EXISTS idx_updates_kind ON legislation_updates(update_kind);
+CREATE INDEX IF NOT EXISTS idx_updates_act ON legislation_updates(act_id);
+
+CREATE TABLE IF NOT EXISTS section_versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  section_id INTEGER NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
+  version_no INTEGER NOT NULL,
+  old_body TEXT,
+  new_body TEXT,
+  effective_from TEXT,
+  source_url TEXT,
+  gazette_id TEXT,
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_sv_section ON section_versions(section_id);
+
+CREATE TABLE IF NOT EXISTS act_versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  act_id INTEGER NOT NULL REFERENCES acts(id) ON DELETE CASCADE,
+  version_no INTEGER NOT NULL,
+  effective_from TEXT,
+  note TEXT,
+  source_url TEXT,
+  gazette_id TEXT,
+  changed_sections TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_av_act ON act_versions(act_id);
 `;

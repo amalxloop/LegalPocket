@@ -18,6 +18,7 @@ const MODULES: ModuleCard[] = [
   { key: 'compare', title: 'Compare Laws', icon: '🔄', tagline: 'IPC↔BNS · CrPC↔BNSS · Evidence↔BSA', route: '/compare', phase: 'live' },
   { key: 'search', title: 'United Legal Search', icon: '🔍', tagline: 'One search across every module', route: '/search', phase: 'live' },
   { key: 'library', title: 'Saved Library', icon: '⭐', tagline: 'Your bookmarks in one place', route: '/library', phase: 'live' },
+  { key: 'updates', title: 'Recent Legal Updates', icon: '📰', tagline: 'Amendments, commencements & bill status', route: '/updates', phase: 'live' },
   { key: 'drafts', title: 'Forms & Drafts', icon: '✍️', tagline: 'Affidavits, notices, rent agreements…', phase: 'roadmap' },
   { key: 'sops', title: 'How-To Guides (SOPs)', icon: '🧭', tagline: 'Step-by-step: FIR, RTI, consumer complaints…', phase: 'roadmap' },
   { key: 'rti', title: 'RTI Module', icon: '📨', tagline: 'Draft, track and appeal RTI applications', phase: 'roadmap' },

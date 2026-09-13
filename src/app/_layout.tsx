@@ -61,6 +61,12 @@ function RootNavigator() {
           name="compare/[setId]"
           options={{ title: 'Comparison', headerBackTitle: 'Compare' }}
         />
+        <Stack.Screen name="updates/index" options={{ title: 'Recent Legal Updates' }} />
+        <Stack.Screen name="updates/inbox" options={{ title: 'Editorial Inbox' }} />
+        <Stack.Screen
+          name="updates/[updateId]"
+          options={{ title: 'Update', headerBackTitle: 'Updates' }}
+        />
       </Stack>
     </>
   );

@@ -4,9 +4,11 @@ import {
   SECTIONS_FTS_DDL,
   ARTICLES_FTS_DDL,
   FTS_TRIGGERS_DDL,
+  PIPELINE_DDL,
   SCHEMA_VERSION,
 } from '@/db/schema';
 import { runSeed } from '@/db/seed';
+import { seedPipelineSamples } from '@/db/seed/updates';
 import {
   listActs,
   getAct,
@@ -20,6 +22,17 @@ import { listParts, getPreamble, listArticlesInPart, getArticle, listSchedules }
 import { listCompareSets, getCompareSet, listMappings, crossReferencesForSection } from '@/db/repos/compare';
 import { unifiedSearch, expandQuery } from '@/db/repos/search';
 import { isBookmarked, addBookmark, removeBookmark, listBookmarks, bookmarksCount } from '@/db/repos/bookmarks';
+import {
+  listUpdates,
+  getUpdate,
+  ingestUpdate,
+  setUnderReview,
+  approveUpdate,
+  rejectUpdate,
+  publishUpdate,
+  sectionVersionHistory,
+  actVersionHistory,
+} from '@/db/repos/updates';
 
 type AnyDb = Parameters<typeof listActs>[0];
 
@@ -35,6 +48,7 @@ async function bootstrap(db: AnyDb): Promise<void> {
       await db.execAsync(SECTIONS_FTS_DDL);
       await db.execAsync(ARTICLES_FTS_DDL);
       await db.execAsync(FTS_TRIGGERS_DDL);
+      await db.execAsync(PIPELINE_DDL);
       await db.execAsync(`INSERT OR REPLACE INTO app_meta(key, value) VALUES ('schema_version', '${SCHEMA_VERSION}');`);
       await db.execAsync('COMMIT;');
     } catch (e) {
@@ -43,6 +57,7 @@ async function bootstrap(db: AnyDb): Promise<void> {
     }
   }
   await runSeed(db);
+  await seedPipelineSamples(db);
   await db.runAsync(`INSERT OR REPLACE INTO app_meta(key, value) VALUES ('seeded', '1')`);
 }
 
@@ -176,6 +191,74 @@ async function main(): Promise<void> {
     check('removed bookmark', !(await isBookmarked(db, 'section', target.id)));
     check('no bookmark leak between checks', (await bookmarksCount(db)) === initialCount);
   }
+
+  console.log('\nupdates (Section 3E pipeline)');
+  const published = await listUpdates(db, { status: 'published' });
+  check('published commencement samples >= 3', published.length >= 3, `${published.length} published`);
+  check('feed rows carry act title', published.every((u) => u.act_short_title));
+
+  const bnsPub = published.find((u) => u.update_kind === 'commencement' && u.act_slug === 'bns-2023');
+  check('BNS commencement sample present', !!bnsPub);
+  if (bnsPub) {
+    const detail = await getUpdate(db, bnsPub.id);
+    check('getUpdate resolves act', detail?.act?.slug === 'bns-2023');
+  }
+
+  const inbox = await listUpdates(db, { status: 'under_review' });
+  check('inbox has pending sample', inbox.length >= 1, `${inbox.length} pending`);
+
+  const ingestId = await ingestUpdate(db, {
+    updateKind: 'amendment',
+    refType: 'section',
+    actSlug: 'bns-2023',
+    sectionNumber: '304',
+    title: 'verify amendment',
+    summary: 'probe',
+    officialUrl: 'https://example.in/gazette/1',
+    gazetteId: 'TEST-1',
+  });
+  check('ingest detected', (await getUpdate(db, ingestId))?.status === 'detected');
+
+  await setUnderReview(db, ingestId);
+  check('under review', (await getUpdate(db, ingestId))?.status === 'under_review');
+  await approveUpdate(db, ingestId);
+  check('approved', (await getUpdate(db, ingestId))?.status === 'approved');
+
+  const bnsAct = await getActBySlug(db, 'bns-2023');
+  const sec304 = (await listSections(db, bnsAct!.id)).find((s) => s.number === '304')!;
+  const oldBody = sec304.body;
+  await publishUpdate(db, ingestId, { newBody: 'VERIFIED TEST BODY — section 304 amended by verification harness.' });
+
+  const publishedIngest = await getUpdate(db, ingestId);
+  check('published after publishUpdate', publishedIngest?.status === 'published');
+  check('published_at set', !!publishedIngest?.published_at);
+
+  const secNow = (await listSections(db, bnsAct!.id)).find((s) => s.number === '304')!;
+  check('section body applied', secNow.body.includes('VERIFIED TEST BODY'));
+  check('section last_amended set', !!secNow.last_amended);
+  check('old body preserved in history', secNow.body !== oldBody);
+  const sVersions = await sectionVersionHistory(db, secNow.id);
+  check('section version recorded', sVersions.length >= 1, `${sVersions.length} versions`);
+  if (sVersions[0]) {
+    check('version carries old text', sVersions[0].old_body === oldBody);
+    check('version carries gazette id', sVersions[0].gazette_id === 'TEST-1');
+  }
+  const aVersions = await actVersionHistory(db, bnsAct!.id);
+  check('act version recorded', aVersions.length >= 1, `${aVersions.length} versions`);
+  const patchedAct = await getAct(db, bnsAct!.id);
+  check('act last_updated bumped', !!patchedAct?.last_updated);
+
+  const rejectedId = await ingestUpdate(db, {
+    updateKind: 'repeal',
+    refType: 'act',
+    actSlug: 'indian-penal-code-1860',
+    title: 'verify rejection',
+  });
+  await rejectUpdate(db, rejectedId, 'Probe rejection.');
+  const rejected = await getUpdate(db, rejectedId);
+  check('reject path', rejected?.status === 'rejected' && rejected.reviewer_note?.includes('Probe'));
+
+  check('pipeline samples idempotent', (await listUpdates(db)).every((u) => u.id));
 
   console.log('\nSUMMARY');
   console.log(`  passed: ${passed}`);

@@ -3,6 +3,57 @@ export type ActStatus = 'active' | 'repealed' | 'not-in-force';
 export type BookmarkItemType = 'act' | 'section' | 'article' | 'part';
 export type CompareStatus = 'verified' | 'pending_verification' | 'repealed';
 
+export type UpdateKind =
+  | 'amendment'
+  | 'commencement'
+  | 'repeal'
+  | 'new_act'
+  | 'bill_introduced'
+  | 'bill_passed'
+  | 'assent';
+
+export type UpdateStatus = 'detected' | 'under_review' | 'approved' | 'rejected' | 'published';
+
+export type UpdateRefType = 'act' | 'section' | 'article' | 'constitution' | 'bill';
+
+export interface LegislationUpdate {
+  id: number;
+  update_kind: UpdateKind;
+  ref_type: UpdateRefType;
+  ref_id: number | null;
+  act_id: number | null;
+  section_number: string | null;
+  title: string;
+  summary: string | null;
+  official_url: string | null;
+  gazette_id: string | null;
+  status: UpdateStatus;
+  detected_at: string;
+  under_review_at: string | null;
+  reviewed_at: string | null;
+  published_at: string | null;
+  reviewer_note: string | null;
+  version_no: number | null;
+}
+
+export interface SectionVersion {
+  id: number;
+  section_id: number;
+  version_no: number;
+  old_body: string | null;
+  new_body: string | null;
+  effective_from: string | null;
+  source_url: string | null;
+  gazette_id: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface ActWithUpdate {
+  update: LegislationUpdate;
+  act: ActRow | null;
+}
+
 export interface ActRow {
   id: number;
   slug: string;
