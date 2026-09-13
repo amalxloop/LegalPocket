@@ -72,7 +72,7 @@ export async function listBookmarks(db: SQLiteDatabase): Promise<BookmarkedItem[
              WHEN 'act'     THEN (SELECT a.category FROM acts a WHERE a.id = b.item_id)
              WHEN 'section' THEN (SELECT a.short_title FROM sections s JOIN acts a ON a.id = s.act_id WHERE s.id = b.item_id)
              WHEN 'article' THEN (SELECT p.title FROM articles ar JOIN parts p ON p.id = ar.part_id WHERE ar.id = b.item_id)
-             WHEN 'part'    THEN CAST(p.number AS TEXT)
+             WHEN 'part'    THEN (SELECT p.number FROM parts p WHERE p.id = b.item_id)
            END AS subtitle,
            CASE b.item_type
              WHEN 'act'     THEN (SELECT a.description FROM acts a WHERE a.id = b.item_id)
