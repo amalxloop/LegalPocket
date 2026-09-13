@@ -1,8 +1,11 @@
+import { useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { colors } from '@/theme/colors';
 import { DatabaseProvider, useDatabaseReady } from '@/hooks/use-database';
+import { getDb } from '@/db/database';
+import { getAutoCheck, checkForUpdates } from '@/db/repos/monitor';
 
 export default function RootLayout() {
   return (
@@ -22,6 +25,23 @@ const headerStyle = {
 
 function RootNavigator() {
   const ready = useDatabaseReady();
+  const checkedRef = useRef(false);
+
+  useEffect(() => {
+    if (!ready) return;
+    (async () => {
+      if (checkedRef.current) return;
+      checkedRef.current = true;
+      try {
+        const db = await getDb();
+        const auto = await getAutoCheck(db);
+        if (auto) await checkForUpdates(db);
+      } catch {
+        // Background check must never break the app; the feed is re-checkable manually.
+      }
+    })();
+  }, [ready]);
+
   if (!ready) {
     return (
       <View style={styles.splash}>

@@ -33,6 +33,16 @@ import {
   sectionVersionHistory,
   actVersionHistory,
 } from '@/db/repos/updates';
+import {
+  checkForUpdates,
+  getMonitorMeta,
+  getAutoCheck,
+  setAutoCheck,
+  parseManifest,
+  isValidManifestItem,
+} from '@/db/repos/monitor';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 type AnyDb = Parameters<typeof listActs>[0];
 
@@ -259,6 +269,60 @@ async function main(): Promise<void> {
   check('reject path', rejected?.status === 'rejected' && rejected.reviewer_note?.includes('Probe'));
 
   check('pipeline samples idempotent', (await listUpdates(db)).every((u) => u.id));
+
+  console.log('\nmonitoring (Section 3E live check)');
+  const manifestRaw = JSON.parse(
+    readFileSync(join(__dirname, '../../monitoring/manifest.example.json'), 'utf8'),
+  ) as unknown;
+  const parsed = parseManifest(manifestRaw);
+  check('example manifest parses', parsed != null && parsed.items.length === 2);
+  const cleanItems = parsed?.items ?? [];
+  check('example items validate', cleanItems.length === 2 && cleanItems.every(isValidManifestItem));
+
+  const fetcher: (url: string) => Promise<unknown> = async () => manifestRaw;
+  const first = await checkForUpdates(db, { fetcher });
+  check('monitor ok', first.sources[0]?.ok === true);
+  check('monitor ingested two', first.total_ingested === 2, `ingested=${first.total_ingested}`);
+  check('monitor meta written', (await getMonitorMeta(db)).lastChecked != null);
+
+  const detected = await listUpdates(db, { status: 'detected' });
+  check('detected items land in editorial inbox', detected.length >= 2, `${detected.length} detected`);
+
+  const second = await checkForUpdates(db, { fetcher });
+  check('monitor idempotent on re-run', second.total_ingested === 0, `new=${second.total_ingested}`);
+
+  const badFetcher: (url: string) => Promise<unknown> = async () => ({
+    schema_version: 1,
+    generated_at: 't',
+    source: { key: 'bad', name: 'bad', url: 'x' },
+    items: [
+      {
+        id: 'x-1',
+        update_kind: 'not-a-kind',
+        ref_type: 'section',
+        title: 'bad',
+        official_url: 'https://x.example/1',
+      },
+      {
+        id: 'x-2',
+        update_kind: 'amendment',
+        ref_type: 'section',
+        act: 'bns-2023',
+        section_number: '303',
+        title: 'Also invalid',
+        official_url: '',
+        gazette_id: 'BAD-2',
+      },
+    ],
+  });
+  const bad = await checkForUpdates(db, { fetcher: badFetcher, sources: [{ key: 'bad', name: 'bad', url: 'x' }] });
+  check('invalid items skipped', bad.sources[0]?.skipped === 2 && bad.sources[0]?.ok === true);
+
+  check('auto-check defaults off', (await getAutoCheck(db)) === false);
+  await setAutoCheck(db, true);
+  check('auto-check on', (await getAutoCheck(db)) === true);
+  await setAutoCheck(db, false);
+  check('auto-check off again', (await getAutoCheck(db)) === false);
 
   console.log('\nSUMMARY');
   console.log(`  passed: ${passed}`);

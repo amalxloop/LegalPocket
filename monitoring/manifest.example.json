@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-13T00:00:00Z",
+  "source": {
+    "key": "legalpocket-content",
+    "name": "LegalPocket content manifest (GitHub Pages)",
+    "url": "https://amalxloop.github.io/legalpocket-content/legal-updates/v1/manifest.json"
+  },
+  "items": [
+    {
+      "id": "SO-7777-E-BNS-304",
+      "update_kind": "amendment",
+      "ref_type": "section",
+      "act": "bns-2023",
+      "section_number": "304",
+      "title": "Police verification note added to section 304 of the Bharatiya Nyaya Sanhita",
+      "summary": "Manifest transport sample: mirrors a Gazette notification describing a change to the interpreted text of section 304.",
+      "official_url": "https://egazette.gov.in/(S(O7777E))/WriteReadData/2026/sample-notification.pdf",
+      "gazette_id": "S.O. 7777(E)"
+    },
+    {
+      "id": "CONST-AMENDMENT-ASSENT-2026",
+      "update_kind": "assent",
+      "ref_type": "constitution",
+      "title": "Constitutional amendment bill assented to by the President",
+      "summary": "Manifest transport sample: flags an assent for editorial triage; no act is referenced.",
+      "official_url": "https://sansad.in/ls/bills/sample-bill",
+      "gazette_id": "CONST-A-2026/1"
+    }
+  ]
+}

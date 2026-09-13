@@ -1,7 +1,10 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { colors, radius, spacing } from '@/theme/colors';
 import { Card } from '@/components/card';
+import { useDatabase } from '@/hooks/use-database';
+import { getAutoCheck, getMonitorMeta, setAutoCheck } from '@/db/repos/monitor';
 
 const ROADMAP = [
   'RTI Module — drafting, PIO directory & tracker',
@@ -16,6 +19,32 @@ const ROADMAP = [
 ];
 
 export default function SettingsScreen() {
+  const db = useDatabase();
+  const [autoCheck, setAutoOn] = useState(false);
+  const [lastChecked, setLastChecked] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const auto = await getAutoCheck(db);
+      const meta = await getMonitorMeta(db);
+      if (mounted) {
+        setAutoOn(auto);
+        setLastChecked(meta.lastChecked);
+        setLastError(meta.lastError);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [db]);
+
+  const toggleAutoCheck = (on: boolean) => {
+    setAutoOn(on);
+    void setAutoCheck(db, on);
+  };
+
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       <Card>
@@ -37,6 +66,34 @@ export default function SettingsScreen() {
           advocate. LegalPocket is not affiliated with, or endorsed by, any
           government department. Statutory text is being sourced from official
           publications (India Code, the e-Gazette) and verified before publication.
+        </Text>
+      </Card>
+
+      <Card>
+        <Text style={styles.cardTitle}>Update monitoring</Text>
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleLabel}>Check for legal updates automatically</Text>
+          <Switch
+            value={autoCheck}
+            onValueChange={toggleAutoCheck}
+            trackColor={{ false: colors.navy600, true: colors.goldDim }}
+            thumbColor={autoCheck ? colors.gold : colors.textMuted}
+          />
+        </View>
+        {lastChecked ? (
+          <Text style={styles.body}>Last checked: {new Date(lastChecked).toLocaleString()}</Text>
+        ) : (
+          <Text style={styles.body}>No check has run yet.</Text>
+        )}
+        {lastError ? (
+          <Text style={styles.body}>
+            Latest source error: {lastError}. The app stays fully offline — updates resume when the
+            feed is reachable.
+          </Text>
+        ) : null}
+        <Text style={styles.note}>
+          When enabled, LegalPocket checks a free static feed on launch and flags anything new for
+          editorial review (monitored → detected → review → publish).
         </Text>
       </Card>
 
@@ -101,6 +158,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pipelineLinkText: { color: colors.gold, fontSize: 13, fontWeight: '700' },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, marginBottom: spacing.sm },
+  toggleLabel: { color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 },
+  note: { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: spacing.sm },
   pressed: { opacity: 0.7 },
   sectionTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: spacing.md },
   roadRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, marginBottom: spacing.sm },

@@ -4,6 +4,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { colors, radius, spacing } from '@/theme/colors';
 import { useDatabase } from '@/hooks/use-database';
 import { listUpdates, type UpdateFeedRow } from '@/db/repos/updates';
+import { checkForUpdates, getMonitorMeta, type MonitorResult } from '@/db/repos/monitor';
 import { SectionListEmpty } from '@/components/empty-state';
 import { UpdateStatusBadge, UPDATE_KIND_LABEL } from '@/components/update-status';
 import type { UpdateStatus } from '@/types';
@@ -20,28 +21,80 @@ export default function UpdatesIndexScreen() {
   const [tab, setTab] = useState<Tab>('recent');
   const [rows, setRows] = useState<UpdateFeedRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const [lastChecked, setLastChecked] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<MonitorResult | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    const feed = await listUpdates(db, {
+      status: tab === 'inbox' ? undefined : 'published',
+      excludeRejected: tab === 'recent',
+    });
+    setRows(feed);
+    setLoading(false);
+  }, [db, tab]);
 
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
       (async () => {
-        const feed = await listUpdates(db, {
-          status: tab === 'inbox' ? undefined : 'published',
-          excludeRejected: tab === 'recent',
-        });
-        if (mounted) {
-          setRows(feed);
-          setLoading(false);
-        }
+        const meta = await getMonitorMeta(db);
+        if (mounted) setLastChecked(meta.lastChecked);
+        await refresh();
       })();
       return () => {
         mounted = false;
       };
-    }, [db, tab]),
+    }, [db, refresh]),
   );
+
+  const runCheck = useCallback(async () => {
+    setChecking(true);
+    setCheckError(null);
+    try {
+      const result = await checkForUpdates(db);
+      setLastResult(result);
+      setLastChecked(result.checked_at);
+      await refresh();
+    } catch (e) {
+      setCheckError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setChecking(false);
+    }
+  }, [db, refresh]);
 
   return (
     <View style={styles.root}>
+      <View style={styles.monitor}>
+        <View style={styles.checkRow}>
+          <Pressable
+            onPress={runCheck}
+            disabled={checking}
+            style={({ pressed }) => [styles.checkButton, (pressed || checking) && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Check for updates"
+          >
+            <Text style={styles.checkButtonText}>
+              {checking ? 'Checking…' : 'Check for updates'}
+            </Text>
+          </Pressable>
+          {lastChecked ? (
+            <Text style={styles.checkMeta}>Last checked {new Date(lastChecked).toLocaleString()}</Text>
+          ) : null}
+        </View>
+        {lastResult ? (
+          <Text style={styles.checkLine}>
+            {lastResult.sources
+              .map(
+                (s) =>
+                  `${s.name}: ${s.ok ? `${s.ingested} new, ${s.skipped} seen` : `unreachable — ${s.error ?? 'unknown error'}`}`,
+              )
+              .join('\n')}
+          </Text>
+        ) : null}
+        {checkError ? <Text style={styles.checkError}>Check failed: {checkError}</Text> : null}
+      </View>
       <View style={styles.tabs}>
         {TABS.map((t) => (
           <Pressable
@@ -105,6 +158,23 @@ export default function UpdatesIndexScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.navy950 },
+  monitor: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  checkButton: {
+    backgroundColor: colors.gold,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 9,
+  },
+  checkButtonText: { color: colors.navy950, fontSize: 13, fontWeight: '800' },
+  checkMeta: { color: colors.textMuted, fontSize: 11.5, flex: 1, textAlign: 'right' },
+  checkLine: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: spacing.sm },
+  checkError: { color: colors.danger, fontSize: 12, marginTop: spacing.sm },
   tabs: {
     flexDirection: 'row',
     gap: spacing.sm,
