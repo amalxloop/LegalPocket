@@ -59,7 +59,8 @@ Then open in Expo Go, an emulator, or a development build (`npm run android` / `
 | `npx expo start` | Dev server (Expo Go / dev build) |
 | `npm run lint` | ESLint (flat config via `eslint-config-expo`) |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run verify:db` | Bootstraps the real schema + seeds and runs 56+ assertions against the data layer |
+| `npm run verify:db` | Bootstraps the real schema + seeds and runs 70+ assertions against the data layer |
+| `npm run content:check` | Content qualification report: per-act section/verified/pending counts + metadata invariants (exits non-zero on failures) |
 
 ## Verifying the data layer
 
@@ -67,8 +68,10 @@ The SQLite layer is tested against a real database engine (Node's built-in `node
 
 ```bash
 npm run verify:db
-# SUMMARY: passed: 56, failed: 0
+# SUMMARY: passed: 73, failed: 0
 ```
+
+`npm run content:check` prints the PRD-3D qualification report — 26 acts, 100+ sections, verified vs. pending counts per act, plus invariants (official URLs on `indiacode.gov.in`, act numbers like `30 of 1956`, in-range years, unique slugs):
 
 ## Project layout
 
@@ -83,15 +86,17 @@ src/
 ├── db/
 │   ├── schema.ts           # DDL: core, FTS5, pipeline tables; SCHEMA_VERSION
 │   ├── database.ts         # open/migrate/seed lifecycle
-│   ├── seed/               # MVP content (Constitution, 22 Acts, compare sets, updates)
+│   ├── seed/               # MVP content (Constitution, 26 Acts, compare sets, updates)
 │   └── repos/              # typed queries per feature
 └── theme/                  # colours & spacing
-scripts/db-verify/          # Node SQLite verification harness
+scripts/
+├── db-verify/              # Node SQLite verification harness (bootstrap + run)
+└── content-check.ts        # PRD-3D content qualification report
 ```
 
 ## Content provenance
 
-MVP seed content is **placeholder** text pending official ingestion and editorial verification (India Code / e-Gazette). That work is tracked: sections get `last_amended` stamps, acts get `status` + `last_updated`, and every applied change is recorded in the version tables so the app can audit what it shows and why. Statute text itself is sourced from official public records.
+MVP seed content is **placeholder** text pending official ingestion and editorial verification (India Code / e-Gazette). Each act is tagged `content_status` (`placeholder` / `official`) plus a `provenance` source line; each section carries a `verified` flag; sections still awaiting official text are marked `[Content pending…]`. `npm run content:check` reports the qualification state and flags metadata invariants so the pipeline cannot silently ship unverified statute text. Statute text itself is sourced from official public records.
 
 ## License
 

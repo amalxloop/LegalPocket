@@ -124,6 +124,13 @@ export default function ActDetailScreen() {
                 Act {act.act_number ?? '—'} · {act.year}
                 {act.last_updated ? ` · last updated ${act.last_updated}` : ''}
               </Text>
+              <View style={styles.badges}>
+                <Badge
+                  text={act.content_status === 'official' ? 'Verified official text' : 'Placeholder — pending verification'}
+                  tone={act.content_status === 'official' ? 'active' : 'pending'}
+                />
+              </View>
+              {!!act.provenance && <Text style={styles.provenance}>Source: {act.provenance}</Text>}
               {!!act.description && <Text style={styles.description}>{act.description}</Text>}
               {count > 0 && (
                 <Pressable onPress={() => router.push('/compare')} style={({ pressed }) => [styles.link, pressed && styles.pressed]}>
@@ -155,6 +162,7 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   meta: { color: colors.textMuted, fontSize: 12.5 },
   description: { color: colors.textSecondary, fontSize: 13.5, lineHeight: 19 },
+  provenance: { color: colors.textMuted, fontSize: 11.5, fontStyle: 'italic' },
   link: { marginTop: 2 },
   linkText: { color: colors.gold, fontSize: 13.5, fontWeight: '600' },
   pressed: { opacity: 0.7 },

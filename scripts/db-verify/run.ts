@@ -1,14 +1,5 @@
 import { VerifierDatabase } from './driver';
-import {
-  SCHEMA_DDL,
-  SECTIONS_FTS_DDL,
-  ARTICLES_FTS_DDL,
-  FTS_TRIGGERS_DDL,
-  PIPELINE_DDL,
-  SCHEMA_VERSION,
-} from '@/db/schema';
-import { runSeed } from '@/db/seed';
-import { seedPipelineSamples } from '@/db/seed/updates';
+import { bootstrap, type AnyDb } from './bootstrap';
 import {
   listActs,
   getAct,
@@ -43,33 +34,6 @@ import {
 } from '@/db/repos/monitor';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-
-type AnyDb = Parameters<typeof listActs>[0];
-
-async function bootstrap(db: AnyDb): Promise<void> {
-  await db.execAsync(SCHEMA_DDL);
-  const row = await db.getFirstAsync<{ value: string }>(
-    `SELECT value FROM app_meta WHERE key = 'schema_version'`,
-  );
-  const v = row ? Number(row.value) : 0;
-  if (v < SCHEMA_VERSION) {
-    await db.execAsync('BEGIN;');
-    try {
-      await db.execAsync(SECTIONS_FTS_DDL);
-      await db.execAsync(ARTICLES_FTS_DDL);
-      await db.execAsync(FTS_TRIGGERS_DDL);
-      await db.execAsync(PIPELINE_DDL);
-      await db.execAsync(`INSERT OR REPLACE INTO app_meta(key, value) VALUES ('schema_version', '${SCHEMA_VERSION}');`);
-      await db.execAsync('COMMIT;');
-    } catch (e) {
-      await db.execAsync('ROLLBACK;');
-      throw e;
-    }
-  }
-  await runSeed(db);
-  await seedPipelineSamples(db);
-  await db.runAsync(`INSERT OR REPLACE INTO app_meta(key, value) VALUES ('seeded', '1')`);
-}
 
 let passed = 0;
 let failed = 0;
@@ -124,6 +88,23 @@ async function main(): Promise<void> {
 
   const cats = await listCategories(db);
   check('categories >= 5', cats.length >= 5, `${cats.length} categories`);
+
+  console.log('\ncontent provenance (schema v3)');
+  check('act catalog >= 26', acts.length >= 26, `${acts.length} acts`);
+  const newActs = ['hindu-succession-act-1956', 'prevention-of-corruption-act-1988', 'arbitration-and-conciliation-act-1996', 'specific-relief-act-1963'];
+  const missing = [];
+  for (const slug of newActs) {
+    const found = await db.getFirstAsync<{ id: number }>(`SELECT id FROM acts WHERE slug = ?`, slug);
+    if (!found) missing.push(slug);
+  }
+  check('new acts present', missing.length === 0, missing.join(', ') || 'all 4 added');
+  check('every act carries provenance', acts.every((a) => !!a.provenance && a.provenance.includes('India Code')));
+  check('content status defaults to placeholder', acts.every((a) => a.content_status === 'placeholder'));
+  const someSections = await db.getAllAsync<{ id: number; verified: number }>(`SELECT id, verified FROM sections LIMIT 5`);
+  check('sections verified default 0', someSections.length > 0 && someSections.every((s) => s.verified === 0));
+  const pending = await db.getFirstAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM sections WHERE body LIKE '[Content pending%'`);
+  const totalSections = await db.getFirstAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM sections`);
+  check('pending placeholders recorded', (pending?.c ?? 0) > 0 && (pending?.c ?? 0) <= (totalSections?.c ?? 0), `${pending?.c ?? 0} pending`);
 
   const bns = await getActBySlug(db, 'bns-2023');
   check('BNS act found', !!bns);

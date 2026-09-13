@@ -74,8 +74,8 @@ async function seedActs(db: SQLiteDatabase): Promise<Map<string, number>> {
   const actIdsBySlug = new Map<string, number>();
   for (const a of buildActRows()) {
     const res = await db.runAsync(
-      `INSERT INTO acts (slug, short_title, year, act_number, jurisdiction, category, status, description, last_updated, official_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO acts (slug, short_title, year, act_number, jurisdiction, category, status, description, last_updated, official_url, content_status, provenance)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       a.slug,
       a.short_title,
       a.year,
@@ -86,6 +86,8 @@ async function seedActs(db: SQLiteDatabase): Promise<Map<string, number>> {
       a.description,
       a.last_updated,
       a.official_url,
+      a.content_status,
+      a.provenance,
     );
     actIdsBySlug.set(a.slug, res.lastInsertRowId);
   }
@@ -123,8 +125,8 @@ async function seedActs(db: SQLiteDatabase): Promise<Map<string, number>> {
       // resolution of chapter_id handled in buildSectionRows index vs act chapters
       const chapterMap = chapterIdsByAct.get(actId);
       await db.runAsync(
-        `INSERT INTO sections (act_id, chapter_id, number, title, body, summary, sort_order, last_amended)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO sections (act_id, chapter_id, number, title, body, summary, sort_order, last_amended, verified)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         actId,
         s.chapter_id ?? null,
         s.number,
@@ -133,6 +135,7 @@ async function seedActs(db: SQLiteDatabase): Promise<Map<string, number>> {
         s.summary,
         s.sort_order,
         s.last_amended,
+        s.verified,
       );
       void chapterMap;
     }

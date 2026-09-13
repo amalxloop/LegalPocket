@@ -6,6 +6,14 @@ import { Card } from '@/components/card';
 import { useDatabase } from '@/hooks/use-database';
 import { getAutoCheck, getMonitorMeta, setAutoCheck } from '@/db/repos/monitor';
 
+interface ContentStatus {
+  acts: number;
+  placeholderActs: number;
+  sections: number;
+  verifiedSections: number;
+  pendingSections: number;
+}
+
 const ROADMAP = [
   'RTI Module — drafting, PIO directory & tracker',
   'Forms & Drafts — guided Q&A → PDF/DOCX export',
@@ -23,16 +31,32 @@ export default function SettingsScreen() {
   const [autoCheck, setAutoOn] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [content, setContent] = useState<ContentStatus | null>(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       const auto = await getAutoCheck(db);
       const meta = await getMonitorMeta(db);
+      const [acts, sections, verified, pending, official] = await Promise.all([
+        db.getAllAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM acts`),
+        db.getAllAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM sections`),
+        db.getAllAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM sections WHERE verified = 1`),
+        db.getAllAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM sections WHERE body LIKE '[Content pending%'`),
+        db.getAllAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM acts WHERE content_status = 'official'`),
+      ]);
+      const actCount = acts[0]?.c ?? 0;
       if (mounted) {
         setAutoOn(auto);
         setLastChecked(meta.lastChecked);
         setLastError(meta.lastError);
+        setContent({
+          acts: actCount,
+          placeholderActs: actCount - (official[0]?.c ?? 0),
+          sections: sections[0]?.c ?? 0,
+          verifiedSections: verified[0]?.c ?? 0,
+          pendingSections: pending[0]?.c ?? 0,
+        });
       }
     })();
     return () => {
@@ -117,13 +141,31 @@ export default function SettingsScreen() {
         <Text style={styles.cardTitle}>Content status</Text>
         <View style={styles.dotRow}>
           <View style={[styles.dot, { backgroundColor: '#3FA46A' }]} />
-          <Text style={styles.dotText}>Seed content for the MVP scaffold is loaded.</Text>
+          <Text style={styles.dotText}>
+            {content ? `Seed content loaded · ${content.acts} acts · ${content.sections} sections` : 'Loading content status…'}
+          </Text>
         </View>
+        {content && (
+          <View style={styles.counts}>
+            <View style={styles.countRow}>
+              <Text style={styles.countLabel}>Verified official</Text>
+              <Text style={styles.countValue}>{content.verifiedSections} sections</Text>
+            </View>
+            <View style={styles.countRow}>
+              <Text style={styles.countLabel}>Pending editorial check</Text>
+              <Text style={styles.countValue}>{content.pendingSections} sections</Text>
+            </View>
+            <View style={styles.countRow}>
+              <Text style={styles.countLabel}>Acts awaiting official text</Text>
+              <Text style={styles.countValue}>{content.placeholderActs} acts</Text>
+            </View>
+          </View>
+        )}
         <Text style={styles.body}>
-          The full Constitution and key Bare Acts are represented in structure; a
-          curated set of landmark Articles and Sections carries full text. Production
-          ingestion from official India Code / e-Gazette sources (with editorial
-          verification and version history) is the Phase-1 content pipeline.
+          Production ingestion from official India Code / e-Gazette sources (with editorial
+          verification and version history) is the Phase-1 content pipeline. Run
+          <Text style={styles.mono}> npm run content:check </Text>
+          for the qualification report.
         </Text>
       </Card>
 
@@ -150,6 +192,11 @@ const styles = StyleSheet.create({
   dotRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   dot: { width: 10, height: 10, borderRadius: radius.pill },
   dotText: { color: colors.text, fontSize: 13, flex: 1 },
+  counts: { gap: spacing.xs, marginBottom: spacing.sm },
+  countRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  countLabel: { color: colors.textSecondary, fontSize: 12.5 },
+  countValue: { color: colors.gold, fontSize: 12.5, fontWeight: '700' },
+  mono: { fontFamily: 'monospace', color: colors.textMuted },
   pipelineLink: {
     marginTop: spacing.md,
     backgroundColor: colors.navy800,

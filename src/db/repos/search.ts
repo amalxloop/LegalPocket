@@ -88,6 +88,7 @@ export async function unifiedSearch(
           summary: h.summary,
           sort_order: 0,
           last_amended: null,
+          verified: 0,
         },
         actTitle: h.act_title,
         actSlug: h.act_slug,

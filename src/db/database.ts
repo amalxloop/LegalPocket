@@ -5,6 +5,7 @@ import {
   ARTICLES_FTS_DDL,
   FTS_TRIGGERS_DDL,
   PIPELINE_DDL,
+  ensureContentMetaColumns,
   APP_DB_KEY,
   SCHEMA_VERSION,
 } from './schema';
@@ -35,6 +36,7 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
       await db.execAsync(ARTICLES_FTS_DDL);
       await db.execAsync(FTS_TRIGGERS_DDL);
       await db.execAsync(PIPELINE_DDL);
+      await ensureContentMetaColumns(db);
       await db.execAsync(`
         INSERT OR REPLACE INTO app_meta(key, value) VALUES ('schema_version', '${SCHEMA_VERSION}');
       `);

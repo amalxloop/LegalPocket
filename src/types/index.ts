@@ -54,6 +54,8 @@ export interface ActWithUpdate {
   act: ActRow | null;
 }
 
+export type ActContentStatus = 'placeholder' | 'official';
+
 export interface ActRow {
   id: number;
   slug: string;
@@ -66,6 +68,8 @@ export interface ActRow {
   description: string | null;
   last_updated: string | null;
   official_url: string | null;
+  content_status: ActContentStatus;
+  provenance: string | null;
 }
 
 export interface ChapterRow {
@@ -87,6 +91,7 @@ export interface SectionRow {
   summary: string | null;
   sort_order: number;
   last_amended: string | null;
+  verified: 0 | 1;
 }
 
 export interface PartRow {

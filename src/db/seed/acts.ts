@@ -35,9 +35,12 @@ export interface ActSeed {
   description: string | null;
   lastUpdated?: string | null;
   officialUrl?: string | null;
+  provenance?: string | null;
   chapters?: ChapterSeed[];
   standaloneSections?: SectionSeed[];
 }
+
+export const DEFAULT_PROVENANCE = 'India Code, Ministry of Law and Justice (indiacode.gov.in)';
 
 const PENDING = `[Content pending verification and seeding from the official India Code repository (PRD section 3D). Provision structure is in place; full text will be added by the content ingestion pipeline.]`;
 
@@ -570,6 +573,7 @@ export const ACT_SEEDS: ActSeed[] = [
     slug: 'dpdp-act-2023',
     shortTitle: 'Digital Personal Data Protection Act',
     year: 2023,
+    actNumber: '22 of 2023',
     category: 'Cyber',
     status: 'not-in-force',
     description: 'Governs the processing of digital personal data in India, establishing obligations of Data Fiduciaries and rights of Data Principals.',
@@ -709,6 +713,104 @@ export const ACT_SEEDS: ActSeed[] = [
       { n: '4', title: 'Penalty for demanding dowry', body: `(1) If any person demands, directly or indirectly, from the parents or other relatives or guardian of a bride or bridegroom, as the case may be, any dowry, he shall be punishable with imprisonment for a term which shall not be less than six months, but which may extend to two years and with fine which may extend to ten thousand rupees.` },
     ],
   },
+  {
+    slug: 'hindu-succession-act-1956',
+    shortTitle: 'Hindu Succession Act',
+    year: 1956,
+    actNumber: '30 of 1956',
+    category: 'Family',
+    status: 'active',
+    description: 'Codifies the law of intestate succession for Hindus, including the rules of devolution on death and the notional partition in respect of coparcenary property.',
+    officialUrl: 'https://www.indiacode.gov.in',
+    standaloneSections: [
+      {
+        n: '6',
+        title: 'Devolution of interest in coparcenary property',
+        body: `(1) On and from the commencement of the Hindu Succession (Amendment) Act, 2005, in a Joint Hindu family governed by the Mitakshara law, the daughter of a coparcener shall — (a) by birth become a coparcener in her own right in the same manner as the son; (b) have the same rights in the coparcenary property as she would have had if she had been a son; and (c) be subject to the same liabilities and disabilities in respect of such coparcenary property as a son would be subject to.`,
+      },
+      {
+        n: '8',
+        title: 'General rules of succession in the case of males',
+        body: `The property of a male Hindu dying intestate shall devolve according to the provisions of this Chapter: firstly, upon the heirs, being the relatives specified in Class I of the Schedule; secondly, if there is no Class I heir, upon the heirs, being the relatives specified in Class II of the Schedule; thirdly, if there is no heir of any of the two classes, then upon the agnates of the deceased; and lastly, if there is no agnate, then upon the cognates of the deceased.`,
+      },
+      {
+        n: '15',
+        title: 'General rules of succession in the case of females',
+        body: `(1) The property of a female Hindu dying intestate shall devolve according to the rules set out in this section — (a) firstly, upon the sons and daughters (including the children of any pre-deceased son or daughter) and the husband; (b) secondly, upon the heirs of the husband; (c) thirdly, upon the mother and the father; (d) fourthly, upon the heirs of the father; and (e) lastly, upon the heirs of the mother.`,
+      },
+    ],
+  },
+  {
+    slug: 'prevention-of-corruption-act-1988',
+    shortTitle: 'Prevention of Corruption Act',
+    year: 1988,
+    actNumber: '49 of 1988',
+    category: 'Governance',
+    status: 'active',
+    description: 'Consolidates the law relating to the prevention of corruption and the prosecution of public servants, including the offence of taking gratification.',
+    officialUrl: 'https://www.indiacode.gov.in',
+    standaloneSections: [
+      { n: '7', title: 'Public servant taking gratification other than legal remuneration in respect of an official act', body: `Whoever, being a public servant, accepts or obtains or agrees to accept or attempts to obtain from any person, for himself or for any other person, any gratification whatever, other than legal remuneration, as a motive or reward for doing or forbearing to do any official act or for showing or forbearing to show, in the exercise of his official functions, favour or disfavour to any person, shall be punishable with imprisonment for a term which shall be not less than three years, but which may extend to seven years, and shall also be liable to fine.` },
+      {
+        n: '13',
+        title: 'Criminal misconduct by a public servant',
+        body: `(1) A public servant is said to commit the offence of criminal misconduct insofar as he — (a) obtains for himself or for any other person any valuable thing or pecuniary advantage by corrupt or illegal means or by abusing his position as a public servant; (b) enjoys assets disproportionate to his known sources of income; or (c) fraudulently or dishonestly engages in any misconduct during the discharge of his duty.`,
+      },
+    ],
+  },
+  {
+    slug: 'arbitration-and-conciliation-act-1996',
+    shortTitle: 'Arbitration and Conciliation Act',
+    year: 1996,
+    actNumber: '26 of 1996',
+    category: 'Dispute Resolution',
+    status: 'active',
+    description: 'Consolidates and amends the law relating to domestic arbitration, international commercial arbitration, and enforcement of foreign arbitral awards, with a separate regime for conciliation.',
+    officialUrl: 'https://www.indiacode.gov.in',
+    standaloneSections: [
+      {
+        n: '7',
+        title: 'Arbitration agreement',
+        body: `(1) "Arbitration agreement" means an agreement by the parties to submit to arbitration all or certain disputes which have arisen or which may arise between them in respect of a defined legal relationship, whether contractual or not.
+(2) An arbitration agreement may be in the form of an arbitration clause in a contract or in the form of a separate agreement.
+(3) An arbitration agreement shall be in writing.`,
+      },
+      {
+        n: '11',
+        title: 'Appointment of arbitrators',
+        body: `(1) A person of any nationality may be an arbitrator, unless otherwise agreed by the parties.
+(2) The parties are free to agree on a procedure for appointing the arbitrator or arbitrators, and failing such agreement for an even number of arbitrators, the arbitrator shall be appointed by a court upon an application of defaulting party as provided in the section.`,
+      },
+      {
+        n: '48',
+        title: 'Grounds for refusing enforcement of foreign awards',
+        body: `(1) Enforcement of a foreign award may be refused, at the request of the party against whom it is invoked, only if that party furnishes proof of the grounds enumerated in the section — including incapacity of the parties, invalidity of the arbitration agreement, want of proper notice of the appointment of the arbitrator or of the arbitral proceedings, or the award dealing with a dispute not contemplated by or not falling within the terms of the submission to arbitration.`,
+      },
+    ],
+  },
+  {
+    slug: 'specific-relief-act-1963',
+    shortTitle: 'Specific Relief Act',
+    year: 1963,
+    actNumber: '47 of 1963',
+    category: 'Civil',
+    status: 'active',
+    description: 'Defines the remedies available for enforcing individual civil rights — specific recovery of possession, specific performance of contracts, and injunctions.',
+    officialUrl: 'https://www.indiacode.gov.in',
+    standaloneSections: [
+      {
+        n: '10',
+        title: 'Specific performance in respect of contracts',
+        body: `Except as otherwise hereinafter provided, the specific performance of any contract shall, when the conditions prescribed in sections 11, 14 and 16 are satisfied, be enforced by the court, in particular for the specific performance of a contract respecting the transfer of immovable property or any interest therein, subject to the discretion of the court in the circumstances of the case.`,
+      },
+      {
+        n: '38',
+        title: 'Perpetual injunction when granted',
+        body: `(1) Subject to the other provisions contained in or referred to by this Chapter, a perpetual injunction may be granted to the plaintiff to prevent the breach of an obligation existing in his favour, whether expressly or by implication.
+(2) When any such obligation arises from contract, the court shall be guided by the rules and provisions contained in Chapter II of this Act.`,
+      },
+    ],
+  },
 ];
 
 export function buildActRows(): ActRow[] {
@@ -724,6 +826,8 @@ export function buildActRows(): ActRow[] {
     description: a.description,
     last_updated: a.lastUpdated ?? null,
     official_url: a.officialUrl ?? null,
+    content_status: 'placeholder',
+    provenance: a.provenance ?? DEFAULT_PROVENANCE,
   }));
 }
 
@@ -756,6 +860,7 @@ export function buildSectionRows(): { actId: number; rows: Omit<SectionRow, 'id'
           summary: null,
           sort_order: 0,
           last_amended: s.lastAmended ?? null,
+          verified: 0,
         });
       }
     }
@@ -769,6 +874,7 @@ export function buildSectionRows(): { actId: number; rows: Omit<SectionRow, 'id'
         summary: null,
         sort_order: 0,
         last_amended: s.lastAmended ?? null,
+        verified: 0,
       });
     }
     // re-assign sort_order as a running index within the act

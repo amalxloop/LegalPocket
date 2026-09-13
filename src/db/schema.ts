@@ -1,6 +1,6 @@
 export const APP_DB_KEY = 'legalpocket';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const SCHEMA_DDL = `
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS acts (
   status TEXT NOT NULL DEFAULT 'active',
   description TEXT,
   last_updated TEXT,
-  official_url TEXT
+  official_url TEXT,
+  content_status TEXT NOT NULL DEFAULT 'placeholder',
+  provenance TEXT
 );
 
 CREATE TABLE IF NOT EXISTS chapters (
@@ -40,7 +42,8 @@ CREATE TABLE IF NOT EXISTS sections (
   body TEXT NOT NULL,
   summary TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
-  last_amended TEXT
+  last_amended TEXT,
+  verified INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS parts (
@@ -220,3 +223,42 @@ CREATE TABLE IF NOT EXISTS act_versions (
 
 CREATE INDEX IF NOT EXISTS idx_av_act ON act_versions(act_id);
 `;
+
+// Schema migration 3: content provenance / verification metadata.
+export interface ColumnUpgrade {
+  table: string;
+  column: string;
+  ddl: string;
+}
+
+export const CONTENT_META_COLUMNS: ColumnUpgrade[] = [
+  {
+    table: 'acts',
+    column: 'content_status',
+    ddl: `ALTER TABLE acts ADD COLUMN content_status TEXT NOT NULL DEFAULT 'placeholder'`,
+  },
+  {
+    table: 'acts',
+    column: 'provenance',
+    ddl: `ALTER TABLE acts ADD COLUMN provenance TEXT`,
+  },
+  {
+    table: 'sections',
+    column: 'verified',
+    ddl: `ALTER TABLE sections ADD COLUMN verified INTEGER NOT NULL DEFAULT 0`,
+  },
+];
+
+export interface ExecLikeDb {
+  getAllAsync<T>(sql: string, ...params: unknown[]): Promise<T[]>;
+  runAsync(sql: string, ...params: unknown[]): Promise<unknown>;
+}
+
+export async function ensureContentMetaColumns(db: ExecLikeDb): Promise<void> {
+  for (const col of CONTENT_META_COLUMNS) {
+    const cols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${col.table})`);
+    if (!cols.some((c) => c.name === col.column)) {
+      await db.runAsync(col.ddl);
+    }
+  }
+}

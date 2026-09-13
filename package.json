@@ -43,6 +43,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "verify:db": "tsx scripts/db-verify/run.ts"
+    "verify:db": "tsx scripts/db-verify/run.ts",
+    "content:check": "tsx scripts/content-check.ts"
   }
 }
