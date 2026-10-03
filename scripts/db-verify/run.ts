@@ -103,8 +103,10 @@ async function main(): Promise<void> {
   const someSections = await db.getAllAsync<{ id: number; verified: number }>(`SELECT id, verified FROM sections LIMIT 5`);
   check('sections verified default 0', someSections.length > 0 && someSections.every((s) => s.verified === 0));
   const pending = await db.getFirstAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM sections WHERE body LIKE '[Content pending%'`);
+  const pendingArticles = await db.getFirstAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM articles WHERE body LIKE '[Content pending%'`);
   const totalSections = await db.getFirstAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM sections`);
-  check('pending placeholders recorded', (pending?.c ?? 0) > 0 && (pending?.c ?? 0) <= (totalSections?.c ?? 0), `${pending?.c ?? 0} pending`);
+  check('no pending placeholders remain', (pending?.c ?? 0) === 0 && (pendingArticles?.c ?? 0) === 0, `${pending?.c ?? 0} sections, ${pendingArticles?.c ?? 0} articles pending`);
+  check('all acts have section bodies', (totalSections?.c ?? 0) > 0);
 
   const bns = await getActBySlug(db, 'bns-2023');
   check('BNS act found', !!bns);

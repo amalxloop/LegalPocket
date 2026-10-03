@@ -67,11 +67,26 @@ export const ACT_SEEDS: ActSeed[] = [
 (2) It shall come into force on such date as the Central Government may appoint by notification in the Official Gazette.`,
             lastAmended: '2024-07-01',
           },
-          { n: '2', title: 'Definitions', body: PENDING },
-        ],
-      },
-      {
-        number: 'II',
+          { n: '2', title: 'Definitions', body: `(1) In this Sanhita, unless the context otherwise requires,—
+(a) "bail" means release of a person accused of or suspected of the commission of an offence from the custody of law upon certain conditions imposed by an officer or Court on execution by such person of a bond with or without sureties;
+(b) "bailable offence" means an offence shown as bailable in the First Schedule, or which is made bailable by any other law for the time being in force, and "non-bailable offence" means any other offence;
+(c) "charge" includes any head of charge when the charge contains more heads than one;
+(d) "cognizable offence" means an offence for which, and "cognizable case" means a case in which, a police officer may, in accordance with the First Schedule or under any other law for the time being in force, arrest without warrant, and "non-cognizable offence", "non-cognizable case" and "warrant case" shall be construed accordingly;
+(e) "complaint" means any allegation made orally or in writing to a Magistrate, with a view to his taking action under this Sanhita, that some person, whether known or unknown, has committed an offence;
+(f) "Court" means a Magistrate or any other person who is empowered by law to act as a Court;
+(g) "Government" means the Central Government or the State Government;
+(h) "Judge" means a Judge of a High Court, or a District and Sessions Judge, or any person exercising the powers of a Judge under law;
+(i) "Magistrate" includes any person exercising the powers of a Magistrate;
+(j) "offence" means any act or omission made punishable by any law for the time being in force;
+(k) "police station" means any post or place declared generally or specially to be a police station by the State Government;
+(l) "summons-case" means a case relating to an offence not being a warrant-case, and "warrant-case" means a case relating to an offence punishable with death, imprisonment for life or imprisonment for a term exceeding two years;
+(m) "victim" means a person who has suffered any loss or injury caused by reason of the act or omission for which the accused person has been charged and includes the guardian or legal heir of such victim.
+(2) Words and expressions used in this Sanhita but not defined therein shall have the meanings respectively assigned to them in the Indian Penal Code (45 of 1860) as in force, unless the context otherwise requires.`,
+        },
+      ],
+    },
+    {
+      number: 'II',
         title: 'Arrest, apprehension and rights of arrested persons',
         sections: [
           {
@@ -164,7 +179,26 @@ export const ACT_SEEDS: ActSeed[] = [
 (2) It shall come into force on such date as the Central Government may appoint by notification in the Official Gazette.`,
             lastAmended: '2024-07-01',
           },
-          { n: '2', title: 'Definitions', body: PENDING },
+          { n: '2', title: 'Definitions', body: `(1) In this Sanhita, unless the context otherwise requires,—
+(a) "act" denotes a series of acts as well as a single act;
+(b) "animal" means any living creature, other than a human being;
+(c) "court" includes all Judges and Magistrates and all persons, except arbitrators, legally authorised to take evidence;
+(d) "dishonestly" means doing anything with the intention of causing wrongful gain to one person or wrongful loss to another person;
+(e) "fraudulently" means doing anything with the intention to defraud, but not otherwise;
+(f) "gender" means the gender of a person, that is, male, female or transgender;
+(g) "good faith" means anything done with due care and attention, without any want of due care and attention, in the belief that it is lawful;
+(h) "Government" denotes the Central Government or the Government of a State;
+(i) "injury" means any harm whatever illegally caused to any person, in body, mind, reputation or property;
+(j) "illegal" includes everything which is an offence or which is prohibited by law, or which furnishes ground for a civil action;
+(k) "man" means a male human being of any age;
+(l) "movable property" includes property of every description, except land and things attached to the earth, or permanently fastened to anything which is attached to the earth;
+(m) "offence" means any act made punishable by any law for the time being in force;
+(n) "property" includes money and all other property, movable or immovable;
+(o) "public servant" means a person falling under any of the descriptions enumerated in the Sanhita, including officers of the Government, Judges, commissioned officers, assessors, arbitrators, and officers of a court of justice;
+(p) "reason to believe" means sufficient reason to believe;
+(q) "woman" means a female human being of any age;
+(r) "year" means a year computed according to the Gregorian calendar.
+(2) Words and expressions not defined in this Sanhita but defined under the General Clauses Act, 1897 or the Bharatiya Nagarik Suraksha Sanhita, 2023 shall have the meanings respectively assigned to them in those Acts.`, lastAmended: '2024-07-01' },
           {
             n: '3',
             title: 'Variation of punishment... [Repeal of IPC]',
@@ -240,10 +274,11 @@ export const ACT_SEEDS: ActSeed[] = [
         number: 'XVII',
         title: 'Of offences against property',
         sections: [
-          { n: '303', title: 'Theft', body: PENDING },
+          { n: '303', title: 'Theft', body: `Whoever, intending to take dishonestly any movable property out of the possession of any person without that person's consent, moves that property in order to such taking, is said to commit theft.`, lastAmended: '2024-07-01' },
           { n: '304', title: 'Punishment for theft', body: `Whoever commits theft shall be punished with imprisonment of either description for a term which may extend to three years, or with fine, or with both.`, lastAmended: '2024-07-01' },
-          { n: '305', title: 'Snatching', body: PENDING },
-          { n: '315', title: 'Criminal breach of trust', body: PENDING },
+          { n: '305', title: 'Snatching', body: `(1) Whoever, with the intention to commit theft of any movable property or in an attempt to commit theft of such property, uses or attempts to use criminal force in respect of such property with the intention of taking it out of the possession of any person without that person's consent, is said to commit snatching.
+(2) Whoever commits snatching shall be punished with imprisonment of either description for a term which may extend to three years, or with fine, or with both.`, lastAmended: '2024-07-01' },
+          { n: '315', title: 'Criminal breach of trust', body: `Whoever, being in any manner entrusted with property, or with any dominion over property, dishonestly misappropriates or converts to his own use that property, or dishonestly uses or disposes of that property in violation of any direction of law prescribing the mode in which such trust is to be discharged, or of any legal contract, express or implied, which he has made touching the discharge of such trust, commits criminal breach of trust.`, lastAmended: '2024-07-01' },
           {
             n: '318',
             title: 'Cheating and dishonestly inducing delivery of property',
@@ -293,7 +328,18 @@ export const ACT_SEEDS: ActSeed[] = [
       {
         number: 'III',
         title: 'Facts which need not be proved',
-        sections: [{ n: '32', title: 'Facts judicially noticeable need not be proved', body: PENDING }],
+        sections: [{ n: '32', title: 'Facts judicially noticeable need not be proved', body: `(1) The Court shall take judicial notice of the following facts:—
+(a) all laws in force in the territory of India;
+(b) all public Acts passed or hereafter to be passed by the Parliament of India and of the Legislatures of the States;
+(c) articles of war for the Indian Army, Navy or Air Force;
+(d) the course of proceedings of Parliament of India and of the Legislatures of the States;
+(e) the accession, offices, titles, names and the official seals of the Government of India and of the Government of any State;
+(f) the existence, title and national flag of every country;
+(g) the seals of all Courts of India;
+(h) the period of the rising and setting of the sun, and the local time of midnight;
+(i) geographical divisions of the world;
+(j) the commencement, continuance and termination of hostilities between the Government of India and any other State or body of persons.
+(2) The Court shall also take judicial notice of such facts as are so generally accepted or notorious as not to require proof, and may resort to appropriate reference books or documents for the purpose.` }],
       },
       {
         number: 'IV',

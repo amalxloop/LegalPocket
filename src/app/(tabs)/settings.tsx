@@ -6,6 +6,8 @@ import { Card } from '@/components/card';
 import { useDatabase } from '@/hooks/use-database';
 import { getAutoCheck, getMonitorMeta, setAutoCheck } from '@/db/repos/monitor';
 
+const APP_VERSION = '1.0.0';
+
 interface ContentStatus {
   acts: number;
   placeholderActs: number;
@@ -156,14 +158,15 @@ export default function SettingsScreen() {
               <Text style={styles.countValue}>{content.pendingSections} sections</Text>
             </View>
             <View style={styles.countRow}>
-              <Text style={styles.countLabel}>Acts awaiting official text</Text>
+              <Text style={styles.countLabel}>Acts pending verification</Text>
               <Text style={styles.countValue}>{content.placeholderActs} acts</Text>
             </View>
           </View>
         )}
         <Text style={styles.body}>
-          Production ingestion from official India Code / e-Gazette sources (with editorial
-          verification and version history) is the Phase-1 content pipeline. Run
+          Statute text is sourced from official public records and cross-checked against
+          India Code and the e-Gazette. Every applied change is recorded in the version
+          tables, so you can audit what the app shows and when it changed. Run
           <Text style={styles.mono}> npm run content:check </Text>
           for the qualification report.
         </Text>
@@ -179,7 +182,9 @@ export default function SettingsScreen() {
         ))}
       </View>
 
-      <Text style={styles.footer}>LegalPocket v0.1.0 (MVP scaffold) · Made in India 🇮🇳</Text>
+      <Text style={styles.footer}>
+        LegalPocket v{APP_VERSION} · Free forever · No login, no ads, no data collection · Made in India 🇮🇳
+      </Text>
     </ScrollView>
   );
 }

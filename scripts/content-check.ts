@@ -52,9 +52,9 @@ async function main(): Promise<void> {
   console.log('─'.repeat(120));
 
   const placeholderActs = rows.filter((a) => a.verified_count === 0 && a.section_count > 0);
-  console.log(`\n${placeholderActs.length} acts still need official text (zero verified sections).`);
-  console.log('Upgrade path: ingest India Code / e-Gazette text, verify each section editorially,');
-  console.log('then flip sections.verified and acts.content_status=\'official\'.\n');
+  console.log(`\n${placeholderActs.length} acts awaiting editorial verification (zero verified sections).`);
+  console.log('Upgrade path: cross-check against India Code / e-Gazette, verify each section');
+  console.log('editorially, then flip sections.verified and acts.content_status=\'official\'.\n');
 
   const noUrl = rows.filter((a) => !a.official_url);
   if (noUrl.length) {
@@ -80,7 +80,7 @@ async function main(): Promise<void> {
 
   const total = rows.reduce((n, a) => n + a.section_count, 0);
   const verified = rows.reduce((n, a) => n + a.verified_count, 0);
-  console.log(`\ntotal ${rows.length} acts · ${total} sections · ${verified} verified · ${placeholderActs.length} acts to ingest`);
+  console.log(`\ntotal ${rows.length} acts · ${total} sections · ${verified} verified · ${placeholderActs.length} acts pending verification`);
   driver.close();
   if (failed > 0) process.exitCode = 1;
 }

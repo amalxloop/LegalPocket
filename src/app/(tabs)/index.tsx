@@ -2,6 +2,7 @@ import { router, type Href } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/theme/colors';
 import { Card } from '@/components/card';
+import { LogoMark } from '@/components/logo-mark';
 
 interface ModuleCard {
   key: string;
@@ -32,7 +33,10 @@ export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <View style={styles.headline}>
-        <Text style={styles.logo}>LegalPocket</Text>
+        <View style={styles.brandRow}>
+          <LogoMark size={40} />
+          <Text style={styles.logo}>LegalPocket</Text>
+        </View>
         <Text style={styles.tagline}>Access to justice, free for everyone.</Text>
       </View>
       <FlatList
@@ -92,6 +96,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
   },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   logo: {
     color: colors.gold,
     fontSize: 28,

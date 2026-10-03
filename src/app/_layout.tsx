@@ -6,6 +6,7 @@ import { colors } from '@/theme/colors';
 import { DatabaseProvider, useDatabaseReady } from '@/hooks/use-database';
 import { getDb } from '@/db/database';
 import { getAutoCheck, checkForUpdates } from '@/db/repos/monitor';
+import { LogoMark } from '@/components/logo-mark';
 
 export default function RootLayout() {
   return (
@@ -46,6 +47,7 @@ function RootNavigator() {
     return (
       <View style={styles.splash}>
         <StatusBar style="light" />
+        <LogoMark size={72} />
         <Text style={styles.splashTitle}>LegalPocket</Text>
         <Text style={styles.splashTag}>Loading the library…</Text>
       </View>
@@ -98,7 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.navy950,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 14,
   },
   splashTitle: {
     color: colors.gold,

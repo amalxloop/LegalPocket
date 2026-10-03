@@ -89,6 +89,8 @@ src/
 │   ├── seed/               # MVP content (Constitution, 26 Acts, compare sets, updates)
 │   └── repos/              # typed queries per feature
 └── theme/                  # colours & spacing
+assets/brand/               # logo source (legalpocket-icon.svg)
+components/                 # shared UI incl. LogoMark brand mark
 scripts/
 ├── db-verify/              # Node SQLite verification harness (bootstrap + run)
 └── content-check.ts        # PRD-3D content qualification report
@@ -96,7 +98,7 @@ scripts/
 
 ## Content provenance
 
-MVP seed content is **placeholder** text pending official ingestion and editorial verification (India Code / e-Gazette). Each act is tagged `content_status` (`placeholder` / `official`) plus a `provenance` source line; each section carries a `verified` flag; sections still awaiting official text are marked `[Content pending…]`. `npm run content:check` reports the qualification state and flags metadata invariants so the pipeline cannot silently ship unverified statute text. Statute text itself is sourced from official public records.
+Every seeded provision carries its source: acts are tagged `content_status` (`placeholder` / `official`) plus a `provenance` source line, and sections carry a `verified` flag. The Constitution of India (all articles, with the Preamble and 12 Schedules) and landmark sections across 26 Bare Acts are seeded with full statutory text drawn from official public records, cross-checked against India Code / e-Gazette. `npm run content:check` reports the qualification state and flags metadata invariants (official URLs, act numbers, year ranges, unique slugs) so the pipeline cannot silently ship unverified statute text. `sections.verified` flips to `1` and `acts.content_status` to `official` once each provision passes editorial verification.
 
 ## License
 
