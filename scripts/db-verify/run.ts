@@ -32,6 +32,16 @@ import {
   parseManifest,
   isValidManifestItem,
 } from '@/db/repos/monitor';
+import {
+  listCourtFeeJurisdictions,
+  getCourtFeeRule,
+  listLimitationEntries,
+  listLimitationRefs,
+  type CourtFeeRule,
+} from '@/db/repos/calculators';
+import { seedCalculators } from '@/db/seed/calculators';
+import { computeCourtFee, formatINR, parseAmount, type FeeBand } from '@/lib/court-fee';
+import { addPeriod, formatDate, parseDateInput } from '@/lib/limitation';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -306,6 +316,123 @@ async function main(): Promise<void> {
   check('auto-check on', (await getAutoCheck(db)) === true);
   await setAutoCheck(db, false);
   check('auto-check off again', (await getAutoCheck(db)) === false);
+
+  console.log('\ncourt fee (PRD 3A)');
+  const juris = await listCourtFeeJurisdictions(db);
+  check('jurisdictions == 36', juris.length === 36, `${juris.length} rows`);
+  const readyJuris = juris.filter((j) => j.status === 'ready');
+  const unknownJuris = juris.filter((j) => j.status === 'unknown');
+  check('ready == 22, unknown == 14', readyJuris.length === 22 && unknownJuris.length === 14, `${readyJuris.length} ready / ${unknownJuris.length} unknown`);
+  check('unknowns carry no invented rates', unknownJuris.every((j) => JSON.parse(j.bands).length === 0));
+  check('ready rows have a source', readyJuris.every((j) => !!j.source_url));
+  check('rows carry as_of + provenance defaults', juris.every((j) => !!j.as_of && j.content_status === 'placeholder' && j.verified === 0));
+
+  const feeProbe = async (slug: string, amount: number): Promise<number | null> => {
+    const r = await getCourtFeeRule(db, slug);
+    if (!r || r.status !== 'ready') return null;
+    return computeCourtFee(r.bands, r.cap, amount);
+  };
+  const probes: [string, number, number][] = [
+    ['rajasthan', 1000, 25],
+    ['rajasthan', 1000000, 62125],
+    ['andhra-pradesh', 1000, 111],
+    ['andhra-pradesh', 100000, 3426],
+    ['maharashtra', 1000000, 24430],
+    ['gujarat', 100000, 5950],
+    ['gujarat', 200000, 7950],
+    ['delhi', 50000, 2832],
+    ['odisha', 1000, 160],
+    ['odisha', 400000, 6560],
+    ['odisha', 500000, 7560],
+    ['assam', 100, 11],
+    ['assam', 950, 126.25],
+    ['assam', 1000, 133.25],
+    ['assam', 10000000, 11000],
+    ['haryana', 7500000, 206300],
+  ];
+  for (const [slug, amount, expected] of probes) {
+    const got = await feeProbe(slug, amount);
+    check(`fee ${slug} @ ${amount} = ${expected}`, got === expected, `got ${got}`);
+  }
+  check('unknown jurisdiction returns null', (await feeProbe('goa', 100000)) === null);
+
+  // Golden cross-check: TS evaluator vs the python reference model across
+  // every band boundary and common amounts (984 probes, 22 jurisdictions).
+  const golden = JSON.parse(
+    readFileSync(join(__dirname, 'fixtures/fee-golden.json'), 'utf8'),
+  ) as [string, number, number][];
+  const ruleCache = new Map<string, CourtFeeRule | null>();
+  let goldenMismatch = 0;
+  let goldenFirst: string | null = null;
+  for (const [slug, amount, expected] of golden) {
+    if (!ruleCache.has(slug)) ruleCache.set(slug, await getCourtFeeRule(db, slug));
+    const r = ruleCache.get(slug);
+    const got = r && r.status === 'ready' ? computeCourtFee(r.bands, r.cap, amount) : null;
+    if (got == null || Math.abs(got - expected) > 0.005) {
+      goldenMismatch++;
+      if (!goldenFirst) goldenFirst = `${slug} @ ${amount}: expected ${expected}, got ${got}`;
+    }
+  }
+  check('golden probes all match', goldenMismatch === 0, goldenFirst ?? `${golden.length} probes ok`);
+
+  check('formatINR lakh grouping', formatINR(1000000) === '10,00,000', formatINR(1000000));
+  check('formatINR paise', formatINR(126.25) === '126.25', formatINR(126.25));
+  check('parseAmount strips grouping', parseAmount('1,00,000') === 100000);
+  check('parseAmount rejects junk', parseAmount('12abc') === null);
+  const floorProbe = computeCourtFee(
+    [{ min: 0, max: null, base: 5, unit: null, rate: 0.1, floor: 10 }],
+    null,
+    20,
+  );
+  check('synthetic band floor', floorProbe === 10, `got ${floorProbe}`);
+  const capProbe = computeCourtFee(
+    [{ min: 0, max: null, base: 5, unit: null, rate: 0.1 }],
+    100,
+    1000,
+  );
+  check('synthetic jurisdiction cap', capProbe === 100, `got ${capProbe}`);
+
+  await seedCalculators(db);
+  const after = await listCourtFeeJurisdictions(db);
+  check('seedCalculators idempotent', after.length === juris.length, `${juris.length} → ${after.length}`);
+
+  console.log('\nlimitation (PRD 3A)');
+  const entries = await listLimitationEntries(db);
+  check('entries == 55', entries.length === 55, `${entries.length} entries`);
+  const suits = entries.filter((e) => e.kind === 'suit');
+  const appeals = entries.filter((e) => e.kind === 'appeal_application');
+  check('suits == 40, appeals == 15', suits.length === 40 && appeals.length === 15, `${suits.length} / ${appeals.length}`);
+  check('periods parsed', entries.every((e) => e.period_value > 0 && ['day', 'month', 'year'].includes(e.period_unit)));
+  check('entries carry as_of + provenance defaults', entries.every((e) => !!e.as_of && e.content_status === 'placeholder' && e.verified === 0));
+  check('entries carry accrual text', entries.every((e) => e.accrual.length > 10));
+  const s30 = entries.filter((e) => e.period_value === 30 && e.period_unit === 'year');
+  check('Article 113 (30 years) present', s30.length >= 1, s30.map((e) => e.article).join(', '));
+  const mortgageHits = await listLimitationEntries(db, { q: 'mortgage' });
+  check('search "mortgage" finds entries', mortgageHits.length >= 1, `${mortgageHits.length} results`);
+  const appealOnly = await listLimitationEntries(db, { kind: 'appeal_application' });
+  check('kind filter', appealOnly.every((e) => e.kind === 'appeal_application') && appealOnly.length === 15, `${appealOnly.length} rows`);
+
+  const refs = await listLimitationRefs(db);
+  check('refs == 25', refs.length === 25, `${refs.length} refs`);
+  check('sections 18 + notes 7', refs.filter((r) => r.kind === 'section').length === 18 && refs.filter((r) => r.kind === 'note').length === 7);
+  check('section refs verbatim (ss.3-24)', refs.some((r) => r.title === 'Bar of limitation'));
+
+  const start = parseDateInput('31/01/2026');
+  check('parseDateInput valid', !!start && start.getMonth() === 0 && start.getDate() === 31);
+  check('parseDateInput rejects 32/01/2026', parseDateInput('32/01/2026') === null);
+  if (start) {
+    const feb = addPeriod(start, 1, 'month');
+    check('month clamp (Jan 31 + 1 month)', feb.getMonth() === 1 && feb.getDate() === 28, formatDate(feb));
+    const next = addPeriod(start, 3, 'year');
+    check('year add', next.getFullYear() === 2029 && next.getMonth() === 0 && next.getDate() === 31, formatDate(next));
+    const d7 = addPeriod(start, 7, 'day');
+    check('day add', d7.getDate() === 7 && d7.getMonth() === 1, formatDate(d7));
+  }
+  const partitionEntry = entries.find((e) => e.label.toLowerCase().includes('partition') || e.accrual.toLowerCase().includes('partition'));
+  if (partitionEntry && start) {
+    const due = addPeriod(start, partitionEntry.period_value, partitionEntry.period_unit);
+    check('deadline computation runs', due instanceof Date && due.getFullYear() >= 2026, formatDate(due));
+  }
 
   console.log('\nSUMMARY');
   console.log(`  passed: ${passed}`);

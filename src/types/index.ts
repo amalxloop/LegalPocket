@@ -189,3 +189,62 @@ export interface BookmarkedItem {
   subtitle: string;
   bodyPreview: string | null;
 }
+
+export type ContentConfidence = 'high' | 'medium' | 'low' | 'none';
+
+export type CourtFeeStatus = 'ready' | 'unknown';
+
+export type LimitationEntryKind = 'suit' | 'appeal_application';
+
+export type LimitationRefKind = 'section' | 'note';
+
+export interface CourtFeeRuleRow {
+  id: number;
+  slug: string;
+  name: string;
+  statute: string;
+  basis: string;
+  status: CourtFeeStatus;
+  confidence: ContentConfidence;
+  bands: string;
+  cap: number | null;
+  source_url: string | null;
+  as_of: string;
+  note: string | null;
+  verified: 0 | 1;
+  content_status: string;
+}
+
+export interface LimitationEntryRow {
+  id: number;
+  slug: string;
+  label: string;
+  article: string;
+  kind: LimitationEntryKind;
+  period: string;
+  period_value: number;
+  period_unit: 'day' | 'month' | 'year';
+  court_type: string;
+  division: string | null;
+  accrual: string;
+  exceptions: string;
+  related_articles: string;
+  source_url: string | null;
+  source_secondary: string | null;
+  as_of: string;
+  confidence: ContentConfidence;
+  verified: 0 | 1;
+  content_status: string;
+}
+
+export interface LimitationRefRow {
+  id: number;
+  kind: LimitationRefKind;
+  ref_key: string;
+  title: string;
+  body: string;
+  exceptions: string | null;
+  source_url: string | null;
+  as_of: string;
+  confidence: ContentConfidence;
+}

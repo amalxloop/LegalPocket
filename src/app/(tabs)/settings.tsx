@@ -17,6 +17,7 @@ interface ContentStatus {
 }
 
 const ROADMAP = [
+  'Jurisdiction finder — court hierarchy & pecuniary limits by state',
   'RTI Module — drafting, PIO directory & tracker',
   'Forms & Drafts — guided Q&A → PDF/DOCX export',
   'SOPs — step-by-step legal how-to guides',

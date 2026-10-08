@@ -83,6 +83,10 @@ function RootNavigator() {
           name="compare/[setId]"
           options={{ title: 'Comparison', headerBackTitle: 'Compare' }}
         />
+        <Stack.Screen
+          name="calculators"
+          options={{ title: 'Court Fee & Limitation' }}
+        />
         <Stack.Screen name="updates/index" options={{ title: 'Recent Legal Updates' }} />
         <Stack.Screen name="updates/inbox" options={{ title: 'Editorial Inbox' }} />
         <Stack.Screen

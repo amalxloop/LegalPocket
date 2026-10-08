@@ -1,6 +1,6 @@
 export const APP_DB_KEY = 'legalpocket';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const SCHEMA_DDL = `
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -166,6 +166,67 @@ CREATE TRIGGER IF NOT EXISTS articles_au AFTER UPDATE ON articles BEGIN
   INSERT INTO articles_fts(rowid, number, title, body, summary)
   VALUES (new.id, new.number, new.title, new.body, new.summary);
 END;
+`;
+
+// Schema migration 4: PRD 3A - court fee & limitation calculator.
+export const CALCULATOR_DDL = `
+CREATE TABLE IF NOT EXISTS court_fee_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  statute TEXT NOT NULL,
+  basis TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'ready',
+  confidence TEXT NOT NULL DEFAULT 'medium',
+  bands TEXT NOT NULL,
+  cap REAL,
+  source_url TEXT,
+  as_of TEXT NOT NULL,
+  note TEXT,
+  verified INTEGER NOT NULL DEFAULT 0,
+  content_status TEXT NOT NULL DEFAULT 'placeholder'
+);
+
+CREATE INDEX IF NOT EXISTS idx_court_fee_status ON court_fee_rules(status);
+CREATE INDEX IF NOT EXISTS idx_court_fee_name ON court_fee_rules(name);
+
+CREATE TABLE IF NOT EXISTS limitation_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT UNIQUE NOT NULL,
+  label TEXT NOT NULL,
+  article TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'suit',
+  period TEXT NOT NULL,
+  period_value INTEGER NOT NULL,
+  period_unit TEXT NOT NULL,
+  court_type TEXT NOT NULL DEFAULT 'civil',
+  division TEXT,
+  accrual TEXT NOT NULL,
+  exceptions TEXT,
+  related_articles TEXT,
+  source_url TEXT,
+  source_secondary TEXT,
+  as_of TEXT NOT NULL,
+  confidence TEXT NOT NULL DEFAULT 'high',
+  verified INTEGER NOT NULL DEFAULT 0,
+  content_status TEXT NOT NULL DEFAULT 'placeholder'
+);
+
+CREATE INDEX IF NOT EXISTS idx_limitation_kind ON limitation_entries(kind);
+CREATE INDEX IF NOT EXISTS idx_limitation_court ON limitation_entries(court_type);
+
+CREATE TABLE IF NOT EXISTS limitation_refs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,
+  ref_key TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  exceptions TEXT,
+  source_url TEXT,
+  as_of TEXT NOT NULL,
+  confidence TEXT NOT NULL DEFAULT 'high',
+  UNIQUE(kind, ref_key)
+);
 `;
 
 // Section 3E: legislative update / editorial pipeline (schema migration 2).
